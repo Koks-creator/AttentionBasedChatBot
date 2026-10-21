@@ -1,0 +1,91 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="controls">
+    <label>Model
+        <select id="model">
+            {% for model in models %}
+                <option value="{{ model }}">{{ model }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label>Temperature
+        <input id="temperature" type="number" min="0.1" max="2" step="0.1" value="0.7">
+    </label>
+    <label>Top-k
+        <input id="top_k" type="number" min="1" max="200" step="1" value="20">
+    </label>
+    <button id="new-chat" type="button">New chat</button>
+</div>
+
+<div id="chat"></div>
+
+<form id="chat-form">
+    <input id="msg" autocomplete="off" placeholder="Say something..." required>
+    <button id="send" type="submit">Send</button>
+</form>
+
+<script>
+const chat = document.getElementById("chat");
+const sendBtn = document.getElementById("send");
+let history = [];   // context for each tab
+
+function addLine(who, text, extraClass = "") {
+    const div = document.createElement("div");
+    div.className = `line ${who} ${extraClass}`.trim();
+    div.textContent = text;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+    return div;
+}
+
+function newChat() {
+    history = [];
+    chat.innerHTML = "";
+}
+
+// changing model = new context
+document.getElementById("model").addEventListener("change", newChat);
+document.getElementById("new-chat").addEventListener("click", newChat);
+
+document.getElementById("chat-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const input = document.getElementById("msg");
+    const message = input.value.trim();
+    if (!message) return;
+
+    input.value = "";
+    addLine("you", message);
+    const typing = addLine("bot", "…", "typing");
+    sendBtn.disabled = true;
+    try {
+        const res = await fetch("/api/chat", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                model: document.getElementById("model").value,
+                message: message,
+                history: history,
+                temperature: parseFloat(document.getElementById("temperature").value),
+                top_k: parseInt(document.getElementById("top_k").value, 10),
+            }),
+        });
+        const data = await res.json();
+        typing.remove();
+        if (!res.ok) {
+            addLine("bot", "Error: " + data.error, "error");
+            return;
+        }
+        history.push(message);
+        if (data.reply) history.push(data.reply);
+        addLine("bot", data.reply || "…");
+    } catch (err) {
+        typing.remove();
+        addLine("bot", "Error: " + err, "error");
+    } finally {
+        sendBtn.disabled = false;
+        input.focus();
+    }
+});
+</script>
+{% endblock %}

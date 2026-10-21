@@ -1,0 +1,211 @@
+/* ── Kolory: jasny motyw domyślnie, ciemny gdy system go używa ───────── */
+:root {
+    --bg: #f4f5f7;
+    --panel: #ffffff;
+    --text: #1d2330;
+    --muted: #6b7280;
+    --border: #e2e5ea;
+    --accent: #4f6bed;
+    --accent-hover: #3f59d6;
+    --accent-text: #ffffff;
+    --bot-bubble: #eef0f4;
+    --error: #c2410c;
+    --radius: 14px;
+    --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #121418;
+        --panel: #1b1e24;
+        --text: #e6e8ec;
+        --muted: #9aa1ad;
+        --border: #2b3039;
+        --accent: #6d84f5;
+        --accent-hover: #8296f7;
+        --bot-bubble: #262a32;
+        --error: #fb923c;
+        --shadow: none;
+    }
+}
+
+/* ── Układ strony: kolumna na całą wysokość, czat rozciąga się w środku ── */
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.app {
+    max-width: 760px;
+    height: 100vh;
+    margin: 0 auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.app h1 {
+    margin: 4px 0 0;
+    font-size: 20px;
+    font-weight: 650;
+}
+
+/* ── Pasek ustawień: model, temperatura, top-k ─────────────────────────── */
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.controls label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.controls #new-chat { margin-left: auto; }
+
+select, input {
+    font: inherit;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 10px;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.controls select,
+.controls input {               /* nie dziedzicz stylu podpisów (małe, pogrubione, wersaliki) */
+    font-size: 14px;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+.controls input[type="number"] { width: 90px; }
+
+select:focus, input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+/* ── Przyciski ─────────────────────────────────────────────────────────── */
+button {
+    font: inherit;
+    font-weight: 600;
+    color: var(--accent-text);
+    background: var(--accent);
+    border: none;
+    border-radius: 10px;
+    padding: 9px 16px;
+    cursor: pointer;
+    transition: background 0.15s, opacity 0.15s;
+}
+
+button:hover { background: var(--accent-hover); }
+button:disabled { opacity: 0.5; cursor: wait; }
+
+#new-chat {
+    color: var(--text);
+    background: transparent;
+    border: 1px solid var(--border);
+}
+
+#new-chat:hover { background: var(--bot-bubble); }
+
+/* ── Okno czatu i dymki ────────────────────────────────────────────────── */
+#chat {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+#chat:empty::before {               /* podpowiedź, gdy rozmowa jest pusta */
+    content: "Say hi to start the conversation…";
+    margin: auto;
+    color: var(--muted);
+}
+
+.line {
+    max-width: 78%;
+    padding: 9px 13px;
+    border-radius: 16px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    animation: pop-in 0.15s ease-out;
+}
+
+.line.you {
+    align-self: flex-end;
+    color: var(--accent-text);
+    background: var(--accent);
+    border-bottom-right-radius: 4px;
+}
+
+.line.bot {
+    align-self: flex-start;
+    background: var(--bot-bubble);
+    border-bottom-left-radius: 4px;
+}
+
+.line.typing { color: var(--muted); font-style: italic; }
+.line.error  { color: var(--error); }
+
+@keyframes pop-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* ── Pole wiadomości ───────────────────────────────────────────────────── */
+#chat-form {
+    display: flex;
+    gap: 8px;
+    padding: 8px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+#chat-form input {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border-color: transparent;
+}
+
+#chat-form input:focus { box-shadow: none; border-color: transparent; }
+
+/* ── Telefon: pasek ustawień zawija się w dwie kolumny ─────────────────── */
+@media (max-width: 520px) {
+    .app { padding: 10px; }
+    .controls #new-chat { margin-left: 0; width: 100%; }
+    .line { max-width: 88%; }
+}
