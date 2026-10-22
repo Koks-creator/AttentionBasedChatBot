@@ -16,12 +16,13 @@ def home():
 @app.post("/api/chat")
 def chat():
     data = request.get_json(silent=True) or {}
-    name = data.get("model")
+    model_name = data.get("model")
     message = str(data.get("message", "")).strip()
     history = data.get("history") or []
+    app.logger.debug(f"{model_name=}, {message=}, {history=}")
 
-    if name not in models:
-        return jsonify(error=f"unknown model: {name}"), 400
+    if model_name not in models:
+        return jsonify(error=f"unknown model: {model_name}"), 400
     if not message:
         return jsonify(error="empty message"), 400
     if not isinstance(history, list) or not all(isinstance(t, str) for t in history):
@@ -32,11 +33,11 @@ def chat():
     except (TypeError, ValueError):
         return jsonify(error="temperature must be a number and top_k an integer"), 400
 
-    bot = models[name]
+    bot = models[model_name]
     temperature = min(max(temperature, 0.1), 1.0)
     top_k = min(max(top_k, 1), bot.tokenizer.vocabulary_size())
 
-    with _locks[name]:
+    with _locks[model_name]:
         # History comes from the browser, so each tab has it's own
         bot.history = [bot.clean(t) for t in history[-bot.context_turns:]]
         reply = bot.respond(message, temperature=temperature, top_k=top_k)
