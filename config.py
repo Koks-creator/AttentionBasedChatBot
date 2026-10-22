@@ -12,18 +12,6 @@ class Config:
     # Model shit
     MODEL: str = "turn_model_extra_v2"
 
-    NUM_LAYERS: int = 4
-    D_MODEL: int = 256
-    NUM_HEADS: int = 8
-    DFF: int = 512
-    DROPOUT: float = 0.3 # .1
-    PAD: int = 0
-    MAX_LEN: int = 40 # sequence max len (in tokens)
-    VOCAB_SIZE: int = 8000 # target vocab size
-    START: int = 2
-    END: int = 3
-    SEP: int = 4
-
     # WEB APP
     WEB_APP_PORT: int = 8000
     WEB_APP_HOST: str = "127.0.0.1"
