@@ -61,11 +61,18 @@ https://huggingface.co/datasets/anezatra/blended-skill-talk
 
 
 ## Tokenization
+Instead of splitting by words (a huge vocabulary, lots of `[UNK]`) or characters (no meanings), we use **subwords**—a compromise: rare words are broken down into pieces (`##ing`, `##ed`).
+We train a single **shared vocabulary** on the training texts (questions and answers are in the same language and domain). Special tokens: `[PAD]` (index 0), `[UNK]`, `[START]`, `[END]`.
+
+For example if 'play' is popular word but 'playing' not, normally 'playing' would end up as `[UNK]`, but thanks to subword tokenization we have 'play' and (`##ing'), so we can create 'playing' out of it - in the result we can create all needed words using smaller vocabulary.
 
 ## Model
 The model is based on the self-attention mechanism, which is faster than traditional RNNs and enables a better understanding of language. This technique has been described in [Attention Is All You Need](https://arxiv.org/pdf/1706.03762) paper.
 
 ### Positional Embedding
+Traditional RNN models process tokens one by one, so order is known, but Self-attention allows model to process tokens paralely which speeds up processing time but model loses order of tokens, that's why regular embedding is not enough because it only gives information about what token it is but doesn't know where it stands, so Positional Embedding also provides information about token position.
+
+Attention Is All You Need 3.4, 3.5
 
 ### What is attention mechanism?
 The attention mechanism in deep learning is a technique that allows a neural network to dynamically select and weight the most important parts of the input data at any given moment, rather than treating all elements equally. How does the attention mechanism work?
@@ -84,6 +91,30 @@ https://medium.com/@prakhargannu/attention-mechanism-in-deep-learning-simplified
 
 #### GlobalSelfAttention
 
-#### CausalSelfAttention
+GlobalSelfAttention is part of the encoder and helps the model understand the relationships between words in context. Since the entire input sequence is available, the encoder can attend to every token, including both preceding and following words. This is important because the meaning of a word often depends on its context. For example, in “I sat on the bank of the river,” the word “river” helps determine which meaning of “bank” is intended. If the encoder could only look backward, it would miss important information from subsequent words.
 
-#### CrossAttention 
+Another advantage of self-attention is parallel processing. Unlike traditional RNNs, which process tokens sequentially, self-attention allows the model to process representations of all input tokens in parallel. However, this means that the model needs positional embeddings to capture information about token order, since self-attention alone does not inherently encode word positions.
+
+Attention Is All You Need 3.2.3
+
+#### CausalSelfAttention
+Part of decoder, during training model can see future tokens because of teacher forcing which provides the decoder with the entire response all at once. Without a mask, the model at position t would see the token it is supposed to predict and would learn to copy. The triangular mask ensures that, during training, the model faces exactly the same conditions as during generation. In other words, we force model to see only already generated response without seeing next tokens.
+
+Attention Is All You Need 3.2.3
+
+#### CrossAttention
+Cross-attention is part of the decoder. CausalSelfAttention focuses on the target sequence, but it does not directly access the context provided by the input question. CrossAttention acts as a bridge between the encoder's GlobalSelfAttention and the decoder's CausalSelfAttention, allowing the decoder to use information from the input when generating a response. This helps the model generate answers that are relevant to the question rather than producing text without considering the input context.
+
+Attention Is All You Need 3.2.3
+
+#### Attention heads
+
+#### Add + LayerNormalization
+
+#### Encoder
+
+#### Decoder
+
+#### FeedForward
+
+#### Transformer
