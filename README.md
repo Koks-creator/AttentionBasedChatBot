@@ -69,6 +69,21 @@ For example if 'play' is popular word but 'playing' not, normally 'playing' woul
 ## Model
 The model is based on the self-attention mechanism, which is faster than traditional RNNs and enables a better understanding of language. This technique has been described in [Attention Is All You Need](https://arxiv.org/pdf/1706.03762) paper.
 
+## Hyperparameters
+
+ - **BATCH** = 64
+ - **EPOCHS** = 40
+ - **NUM_LAYERS** = 4
+ - **D_MODEL** = 256 - size of each token's vector
+ - **NUM_HEADS** = 8 -  number of attention heads
+ - **DFF** = 512 - width of the hidden layer inside FeedForward
+ - **DROPOUT** = 0.3
+ - **TARGET_VOCAB_SIZE** = 8000
+ - **MAX_LEN** = 40 - max len of the answer (decoder)
+ - **MAX_SRC_LEN** = 120 - max len of the input (encoder), it's larger cuz we need to fit larger context from 2-3 turns
+ - **CONTEXT_TURNS** = 4 - number of turns, how many last statements model sees as context
+
+
 ### Positional Embedding
 Traditional RNN models process tokens one by one, so order is known, but Self-attention allows model to process tokens paralely which speeds up processing time but model loses order of tokens, that's why regular embedding is not enough because it only gives information about what token it is but doesn't know where it stands, so Positional Embedding also provides information about token position.
 
@@ -107,14 +122,49 @@ Cross-attention is part of the decoder. CausalSelfAttention focuses on the targe
 
 Attention Is All You Need 3.2.3
 
-#### Attention heads
+#### Multi-Head Attention
+Attention heads allow model to jointly attend to information from different representation subspaces at different position and insted of processing with just one full-sized dimension attention mechanism we can split processing into few paralel heads which speeds up computation but also model can deal with more diverse patterns, because each head can  specialize in different linguistic or contextual features simultaneously (e.g., one head might track local grammar, while another tracks long-range semantic dependencies).
+
+Attention Is All You Need 3.2.2
 
 #### Add + LayerNormalization
+The residual connection x + f(x) means each sub-layer only learns a difference, and the gradient has a direct path through all layers, which is what makes deep networks trainable at all (an idea from ResNet). LayerNorm normalizes each token vector separately (mean 0, variance 1, then a trained scale and shift), which stabilizes training. This is the paper's version, normalizing after the addition (Post-LN); newer models normalize before the sub-layer (Pre-LN).
+
+Attention Is All You Need 3.2.1
+
+### FeedForward
+The FeedForward Network (FFN) typically consists of two dense layers: the first expands the token representation to a higher-dimensional hidden space, while the second projects it back to the original embedding dimension. Dropout and normalization may also be used in the surrounding Transformer block.
+
+Its main purpose is position-wise processing. Unlike self-attention, which mixes information across different tokens in a sequence, the FFN processes each token independently, applying the same transformations to every position. This allows the model to further transform and refine token representations after attention has incorporated contextual information.
+
+Attention Is All You Need 3.3
 
 #### Encoder
+Encoder combines positional embedding, GlobalSelfAttention and FeedForward into one being, it's job is to read context from the input and understand relations between tokens.
+
+Attention Is All You Need 3.1
 
 #### Decoder
+Decoder combines positional embedding, CausalSelfAttention, CrossAttention and FeedForward, it's task is generating a response token by token with respect to context extracted by the encoder.
 
-#### FeedForward
+Attention Is All You Need 3.1
 
 #### Transformer
+In transformer we're basically putting everything togather, it computes the PAD mask (tokens != PAD), runs the encoder, then the decoder. At the end, Dense(V) turns each vector into V numbers (logits): a score for every vocabulary token as the next one. There is no softmax, because the loss with from_logits=True applies it itself, which is numerically more stable. During generation we take the logits of the last position and pick the next token from them.
+
+Attention Is All You Need 3.4
+
+## Training
+Training using all mentioned datasets. In `chatbot_transformer.ipynb` notebook you can turn off some extra datasets if you want to using **USE_BST** (for Blended Skil dataset) and **USE_SPC** (Synthetic-Persona-Chat) flags. 
+
+### Training parameters
+40 epochs with AdamW as optimizer with addition of custom learning rate schedule.
+
+### Callbacks
+2 model checkpoints for best and last weights, early stopping and csv logger.
+
+### Metrics
+
+### Results
+
+## Generating responses
