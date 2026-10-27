@@ -164,7 +164,25 @@ Training using all mentioned datasets. In `chatbot_transformer.ipynb` notebook y
 2 model checkpoints for best and last weights, early stopping and csv logger.
 
 ### Metrics
+Besides regular loss and val loss there are also masked accuracy and val masked accuracy. It's the Next-token accuracy that ignores padding.
+
+For every position of the answer the model predicts the NEXT token
+(teacher forcing: it sees the true previous tokens). We take the
+highest-scoring token (argmax over the vocabulary) and compare it
+with the label. "Masked" means that [PAD] positions are excluded,
+otherwise the easy-to-predict padding would inflate the score.Result: the fraction of real answer tokens predicted exactly right. But the thing is it's not BERT-style masked language modeling, because no inputs are hidden. It is also a strict measure for dialogue: a different but
+perfectly good answer ("not bad" instead of "fine") counts as wrong.
+
+https://www.tensorflow.org/text/tutorials/transformer - masked accuracy function
 
 ### Results
 
-## Generating responses
+ - 3 turns model
+ ![alt text](assets/three_turns_model.jpg)
+
+ - 4 turns model 
+ ![alt text](assets/four_turns_model.jpg)
+
+In both cases early stopping stopped the training way before reaching 40 epochs (12 for 3 turns and 15 for 4 turns). Results are quite similiar with 3 turns achieving loss at the level of ~3 and val loss ~3.5 and masked accuracy reaching ~0.58 and val maskec accuracy ~0.5. 4 turns model got loss at the level of ~2.9, val loss ~3.55, masked accuracy reaching ~0.5 and val masked accuracy reaching ~0.6. Overall results are mixed, there is not much of a difference when looking at the metrics but when evaluating generative models you need to remember that looking only at the metrics is not enough (it's not like in classic classifaction or object detection)- on top of that you have to evaluate model by manually checking it's results. **Metrics still provide usefull information but sometimes in the case of GAN models they might not look that good but the results might be fine.**
+
+### Generating responses
