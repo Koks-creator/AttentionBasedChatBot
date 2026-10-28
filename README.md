@@ -18,6 +18,9 @@ numpy==2.4.3
 tensorflow==2.21.0
 ```
 
+## Configuration
+Configuration sits in `config.py`, while model configuration sits in dedicated `params.json` file for each model.
+
 ## Datasets
 
 ### DailyDialog
@@ -64,7 +67,7 @@ https://huggingface.co/datasets/anezatra/blended-skill-talk
 Instead of splitting by words (a huge vocabulary, lots of `[UNK]`) or characters (no meanings), we use **subwords**—a compromise: rare words are broken down into pieces (`##ing`, `##ed`).
 We train a single **shared vocabulary** on the training texts (questions and answers are in the same language and domain). Special tokens: `[PAD]` (index 0), `[UNK]`, `[START]`, `[END]`.
 
-For example if 'play' is popular word but 'playing' not, normally 'playing' would end up as `[UNK]`, but thanks to subword tokenization we have 'play' and (`##ing'), so we can create 'playing' out of it - in the result we can create all needed words using smaller vocabulary.
+For example if 'play' is popular word but 'playing' not, normally 'playing' would end up as `[UNK]` or new item in vocabulary, but thanks to subword tokenization we have 'play' and (`##ing'), so we can create 'playing' out of it - in the result we can create all needed words using smaller vocabulary.
 
 ## Model
 The model is based on the self-attention mechanism, which is faster than traditional RNNs and enables a better understanding of language. This technique has been described in [Attention Is All You Need](https://arxiv.org/pdf/1706.03762) paper.
@@ -185,4 +188,158 @@ https://www.tensorflow.org/text/tutorials/transformer - masked accuracy function
 
 In both cases early stopping stopped the training way before reaching 40 epochs (12 for 3 turns and 15 for 4 turns). Results are quite similiar with 3 turns achieving loss at the level of ~3 and val loss ~3.5 and masked accuracy reaching ~0.58 and val maskec accuracy ~0.5. 4 turns model got loss at the level of ~2.9, val loss ~3.55, masked accuracy reaching ~0.5 and val masked accuracy reaching ~0.6. Overall results are mixed, there is not much of a difference when looking at the metrics but when evaluating generative models you need to remember that looking only at the metrics is not enough (it's not like in classic classifaction or object detection)- on top of that you have to evaluate model by manually checking it's results. **Metrics still provide usefull information but sometimes in the case of GAN models they might not look that good but the results might be fine.**
 
-### Generating responses
+## Generating responses
+For that task use *turbo_chat_bot.py* module. **ChatBot** class as parameters takes `model_path`, `vocab_path` and `params_path`, so basically all artifacts from training.
+
+### 3 turns model
+temperature=0.7, top_k=20
+
+    You: hi
+    Bot: Hi gab good, nice to meet you.
+    You: what's up?
+    Bot: I'm just getting ready for work.
+    You: what do you do for a living?
+    Bot: I'm a teacher.
+    You: at what school?
+    Bot: I'm in college right now.
+    You: oh okay, how old are you?
+    Bot: 3.
+    You: you're kinda young bro  
+    Bot: Yeah i am.
+    You: and you're a teacher?
+    Bot: I'm a teacher.
+    You: damn, that's sick. What stuff do you teach?
+    Bot: I'm not sure, but i know some.
+
+### 4 turns model
+temperature=0.7, top_k=20
+
+    You: hello
+    Bot: Hi. this is m hello, this is hello.
+    You: what's up?
+    Bot: I'm doing well, thank you.
+    You: what do you do for a living?
+    Bot: I work as a teacher.
+    You: at what school?         
+    Bot: I'm a teacher.
+    You: oh okay, how old are you?
+    Bot: I'm ten years old.
+    You: you're kinda young bro 
+    Bot: Yeah, i've been in a few years now.
+    You: and you're a teacher?
+    Bot: I'm a teacher.
+    You: damn, that's sick. What stuff do you teach?
+    Bot: I teach kindergarten.
+
+### Different temperatures
+Lower temperature, more predictable answers, higher less predictable.
+
+**Testing on 3 turne model:**
+
+temperature=0.1, top_k=20
+
+    You: hi
+    Bot: Hi, hi.
+    You: how are you?
+    Bot: I'm doing well, thanks. how about you?
+    You: good, where do you work?
+    Bot: I work at a hospital.
+    You: oh really? For how long?
+    Bot: About 5 years.
+    You: So, you're quite experienced.
+    Bot: I am.
+    You: are you a nurse or something else?
+    Bot: No.
+    You: So, what role>
+    Bot: I love the pyramid and the polluton.
+
+temperature=0.9, top_k=20
+
+    You: hi
+    Bot: Hi. how are you doing?
+    You: how are you?
+    Bot: I'm doing well, too. just got back from a while.
+    You: good, where do you work?
+    Bot: I work at a hotel.
+    You: oh really? For how long?
+    Bot: For a month now.
+    You: So, you're quite new.       
+    Bot: Thank you. i was in high school.
+    You: what high school?
+    Bot: You're a teacher! a school. what about you?
+    You: crazy
+    Bot: What did you study?
+    You: math
+    Bot: How do you do that?
+    You: I dunno, i just learn and shiet
+    Bot: I do not know you.
+
+### Different top_k
+Keeps only the k best candidates, so the ones on the top are the most suited words and the deeper you go the less suited words you will get, so top_k is to limit that potential set of words. The lower the smaller set and the higher the larger set.
+
+temperature=0.1, top_k=20 
+
+    You: hi
+    Bot: Hi, hi.
+    You: do you feel good today?
+    Bot: I feel like i'm not feeling well.
+    You: sorry to hear that
+    Bot: I'm trying to get into trouble.
+    You: what trouble?
+    Bot: I'm not sure. # sad shit man
+    You: crazy shit man
+    Bot: I'm sorry.
+    You: but that's okay
+    Bot: I'm sorry.
+    You: good good
+    Bot: I'm not sure if i'm going to be able to help myself.
+    You: that's depressing, you're good bro, let's talk about something else
+    Bot: I'm not sure i'm going to be able to talk to you about that.
+    You: let's go to the gym
+    Bot: I'm going to go to the gym with my kids.
+    You: how many kids do you have?
+    Bot: I have two kids.
+    You: how old are they?
+    Bot: They are 5 and 5.
+
+temperature=0.1, top_k=1
+
+    You: hi
+    Bot: Hi, hi.
+    You: how are you?
+    Bot: I'm doing well, thanks. how about you?
+    You: good too, what do you do in your free time?
+    Bot: I like to read, watch movies, and play video games.
+    You: me too
+    Bot: What's your favorite movie?
+    You: dunkirk
+    Bot: I love that one too!
+    You: do you like music?
+    Bot: I love music! i listen to it a lot.
+    You: what band
+    Bot: They're a band.
+    You: give me a nmae of the band you like the most
+    Bot: I like the band of the band.
+    You: i like kanonerfieber
+    Bot: I like katie. i've seen them in concert a few times.
+    You: when it was?
+    Bot: It was over a week ago.
+    You: enjoyed it? Good vibe?
+    Bot: Yes.
+    You: sounds cool 
+    Bot: I'm glad you liked it.
+
+Overall, it's good to play around with these values and see what fits your needs the best, the lower temperature and top_k the more predictable answers become, sometimes to the point of repating the same stuff, when that happens you should  try increasing top_k and temperature but when these values are too high answers might become a nonsense.
+
+## Web App
+Just a regular web app to present chat in some nice way, nothing fancy here.
+
+You can run it with:
+```shell
+python .\webapp\run.py
+```
+
+## Conclusion
+Overall it's a nice project to do by yourself, because it helps you understand attention mechanisms which are the core of modern LLMs and not only that but also understanding evaluation process which is a bit more nuanced than in case of traditional neural networks.
+
+https://www.youtube.com/watch?v=fFbPRQ0Haqw
